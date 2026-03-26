@@ -4,10 +4,12 @@ import { useRef } from "react"
 import { Download } from "lucide-react"
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
 } from "recharts"
@@ -17,15 +19,35 @@ import { SignalPoint } from "@/types/signal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-type SeriesKey = "original" | "transformed"
+type ChartMode = "single" | "overlay"
 
-type Props = {
+type SingleProps = {
+  mode: "single"
   data: SignalPoint[]
   title: string
   subtitle: string
-  seriesKey: SeriesKey
+  seriesKey: "original" | "transformed"
   stroke: string
   fileName: string
+}
+
+type OverlayProps = {
+  mode: "overlay"
+  data: SignalPoint[]
+  title: string
+  subtitle: string
+  originalStroke: string
+  transformedStroke: string
+  fileName: string
+}
+
+type Props = SingleProps | OverlayProps
+
+const CHART_COLORS = {
+  original: "oklch(0.72 0.19 195)",      // Vibrant teal
+  transformed: "oklch(0.68 0.19 25)",     // Warm coral-orange
+  originalAlt: "oklch(0.65 0.22 260)",    // Rich indigo
+  transformedAlt: "oklch(0.70 0.18 330)", // Magenta-pink
 }
 
 function exportSvgAsPng(svg: SVGSVGElement, fileName: string) {
@@ -90,14 +112,9 @@ function exportSvgAsPng(svg: SVGSVGElement, fileName: string) {
   image.src = url
 }
 
-export function SignalChart({
-  data,
-  title,
-  subtitle,
-  seriesKey,
-  stroke,
-  fileName,
-}: Props) {
+export { CHART_COLORS }
+
+export function SignalChart(props: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
 
   function handleExport() {
@@ -107,52 +124,108 @@ export function SignalChart({
       return
     }
 
-    exportSvgAsPng(svg, fileName)
+    exportSvgAsPng(svg, props.fileName)
   }
 
+  const isOverlay = props.mode === "overlay"
+
   return (
-    <Card className="border-border/70">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+    <Card className="border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
         <div>
-          <CardTitle className="text-base">{title}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          <CardTitle className="text-sm font-semibold">{props.title}</CardTitle>
+          <p className="mt-0.5 text-xs text-muted-foreground">{props.subtitle}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="size-4" />
-          Export PNG
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleExport}>
+          <Download className="mr-1 size-3" />
+          PNG
         </Button>
       </CardHeader>
 
-      <CardContent>
-        <div ref={chartContainerRef} className="h-72 w-full sm:h-80">
+      <CardContent className="pb-3 pt-0">
+        <div ref={chartContainerRef} className="h-56 w-full sm:h-64 lg:h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ left: 6, right: 10, top: 10, bottom: 8 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <LineChart data={props.data} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+              <CartesianGrid
+                stroke="var(--border)"
+                strokeDasharray="3 3"
+                strokeOpacity={0.5}
+              />
               <XAxis
                 dataKey="t"
                 stroke="var(--muted-foreground)"
-                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                tickLine={{ stroke: "var(--border)" }}
+                axisLine={{ stroke: "var(--border)" }}
+                label={{
+                  value: "t",
+                  position: "insideBottomRight",
+                  offset: -4,
+                  fill: "var(--muted-foreground)",
+                  fontSize: 11,
+                  fontStyle: "italic",
+                }}
               />
               <YAxis
                 stroke="var(--muted-foreground)"
-                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                tickLine={{ stroke: "var(--border)" }}
+                axisLine={{ stroke: "var(--border)" }}
+                width={36}
               />
-              <Tooltip
+              <RechartsTooltip
                 contentStyle={{
-                  background: "var(--card)",
+                  background: "var(--popover)",
                   border: "1px solid var(--border)",
-                  borderRadius: "var(--radius)",
+                  borderRadius: "var(--radius-md)",
+                  fontSize: "12px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
-                labelStyle={{ color: "var(--foreground)" }}
+                labelStyle={{ color: "var(--foreground)", fontWeight: 500 }}
+                labelFormatter={(value) => `t = ${Number(value).toFixed(3)}`}
               />
-              <Line
-                type="monotone"
-                dataKey={seriesKey}
-                name={seriesKey === "original" ? "Original" : "Transformed"}
-                stroke={stroke}
-                dot={false}
-                strokeWidth={2.8}
-              />
+              <ReferenceLine x={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
+              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
+
+              {isOverlay ? (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="original"
+                    name="x(t) Original"
+                    stroke={props.originalStroke}
+                    dot={false}
+                    strokeWidth={2.2}
+                    animationDuration={300}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="transformed"
+                    name="y(t) Transformed"
+                    stroke={props.transformedStroke}
+                    dot={false}
+                    strokeWidth={2.2}
+                    strokeDasharray="6 3"
+                    animationDuration={300}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    height={28}
+                    iconType="line"
+                    wrapperStyle={{ fontSize: "11px", color: "var(--muted-foreground)" }}
+                  />
+                </>
+              ) : (
+                <Line
+                  type="monotone"
+                  dataKey={props.seriesKey}
+                  name={props.seriesKey === "original" ? "x(t)" : "y(t)"}
+                  stroke={props.stroke}
+                  dot={false}
+                  strokeWidth={2.4}
+                  animationDuration={300}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

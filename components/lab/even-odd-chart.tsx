@@ -42,7 +42,7 @@ export function EvenOddChart({ data }: Props) {
       </CardHeader>
       <CardContent className="pb-3 pt-0">
         <div className="h-48 w-full sm:h-56">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={data} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.4} />
               <XAxis

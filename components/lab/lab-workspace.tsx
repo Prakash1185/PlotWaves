@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   ChevronDown,
@@ -13,6 +14,8 @@ import {
   EyeOff,
   Layers,
   PanelRight,
+  Play,
+  Pause,
   RotateCcw,
   Settings2,
   SplitSquareVertical,
@@ -59,6 +62,15 @@ import { sampleSignal } from "@/lib/services/signal/sample-signal"
 import { formatEquation } from "@/lib/services/equation/format-equation"
 import { getExplanation } from "@/lib/services/explanation/get-explanation"
 import { compileManualEquation } from "@/lib/services/equation/manual-evaluator"
+import {
+  computeEvenOddDecomposition,
+  computeFrequencySpectrum,
+  computeSignalStats,
+} from "@/lib/services/signal/signal-analysis"
+import { SignalStatsPanel } from "@/components/lab/signal-stats-panel"
+import { SpectrumChart } from "@/components/lab/spectrum-chart"
+import { EvenOddChart } from "@/components/lab/even-odd-chart"
+import { ConvolutionAnimator } from "@/components/lab/convolution-animator"
 
 type EquationMode = "parametric" | "manual"
 type ChartLayout = "split" | "overlay"
@@ -247,6 +259,8 @@ export function LabWorkspace() {
   const [params, setParams] = useState<SignalParams>(defaults)
   const [isResetOpen, setResetOpen] = useState(false)
   const [isControlsOpen, setControlsOpen] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const [equationMode, setEquationMode] = useState<EquationMode>("parametric")
   const [manualExpression, setManualExpression] = useState("0")
@@ -256,6 +270,7 @@ export function LabWorkspace() {
   const [showTransformed, setShowTransformed] = useState(true)
 
   const [showConvolutionPreview, setShowConvolutionPreview] = useState(false)
+  const [showConvolutionAnimator, setShowConvolutionAnimator] = useState(false)
   const [convGain, setConvGain] = useState(1)
   const [convDecay, setConvDecay] = useState(0.65)
 
@@ -324,6 +339,15 @@ export function LabWorkspace() {
     }
   }, [convolutionData])
 
+  const originalStats = useMemo(() => computeSignalStats(data, "original"), [data])
+  const transformedStats = useMemo(() => computeSignalStats(data, "transformed"), [data])
+
+  const frequencySpectrum = useMemo(() => computeFrequencySpectrum(data, "transformed"), [data])
+  const evenOddData = useMemo(() => {
+    const dec = computeEvenOddDecomposition(data, "transformed")
+    return data.map((d, i) => ({ t: d.t, even: dec.even[i], odd: dec.odd[i] }))
+  }, [data])
+
   const updateParam = useCallback(<K extends keyof SignalParams>(key: K, value: SignalParams[K]) => {
     setParams((prev) => ({ ...prev, [key]: value }))
   }, [])
@@ -361,6 +385,25 @@ export function LabWorkspace() {
   }
 
   useEffect(() => {
+    let animId: number
+    let lastTime = performance.now()
+    if (isPlaying) {
+      const step = (time: number) => {
+        const dt = (time - lastTime) / 1000
+        lastTime = time
+        setParams((p) => {
+          let nextShift = p.shift + 1.5 * dt
+          if (nextShift > p.maxTime + 2) nextShift = p.minTime - 2
+          return { ...p, shift: nextShift }
+        })
+        animId = requestAnimationFrame(step)
+      }
+      animId = requestAnimationFrame(step)
+    }
+    return () => cancelAnimationFrame(animId)
+  }, [isPlaying])
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
@@ -368,15 +411,52 @@ export function LabWorkspace() {
 
       const key = event.key.toLowerCase()
 
-      if (key === "c") {
+      if (key === " ") {
         event.preventDefault()
-        copyEquation()
+        setIsPlaying((p) => {
+          const next = !p
+          toast.info(next ? "Animation playing" : "Animation paused")
+          return next
+        })
+        return
+      }
+
+      if (key === "o") {
+        event.preventDefault()
+        setChartLayout((prev) => {
+          const next = prev === "split" ? "overlay" : "split"
+          toast.info(`Switched to ${next} view`)
+          return next
+        })
+        return
+      }
+
+      if (key === "s") {
+        event.preventDefault()
+        setSignalType((prev) => {
+          const types: SignalType[] = ["sine", "cosine", "step", "ramp", "exp", "square"]
+          const next = types[(types.indexOf(prev) + 1) % types.length]
+          toast.info("Switched to " + next)
+          return next
+        })
+        return
+      }
+
+      if (key === "?" || key === "/") {
+        event.preventDefault()
+        setShowShortcuts(true)
         return
       }
 
       if (key === "r") {
         event.preventDefault()
-        setResetOpen(true)
+        resetAll()
+        return
+      }
+
+      if (key === "c") {
+        event.preventDefault()
+        copyEquation()
         return
       }
 
@@ -575,6 +655,22 @@ export function LabWorkspace() {
           <p>At t ≈ 0: {convolutionStats.atZero}</p>
         </motion.div>
       ) : null}
+
+      {showConvolutionPreview && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full text-xs" 
+          onClick={() => {
+            setShowConvolutionAnimator(p => !p)
+            if (!showConvolutionAnimator) {
+              setChartLayout("split")
+            }
+          }}
+        >
+          {showConvolutionAnimator ? "Hide Math Animation" : "Show Math Animation"}
+        </Button>
+      )}
     </div>
   )
 
@@ -686,11 +782,10 @@ export function LabWorkspace() {
               initial={{ opacity: 0, x: 4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03, duration: 0.15 }}
-              className={`flex items-start gap-2 rounded-md px-2.5 py-2 text-xs leading-relaxed ${
-                entry.category === "warning"
+              className={`flex items-start gap-2 rounded-md px-2.5 py-2 text-xs leading-relaxed ${entry.category === "warning"
                   ? "border border-destructive/20 bg-destructive/5 text-destructive"
                   : "text-muted-foreground"
-              }`}
+                }`}
             >
               {entry.category === "warning" && (
                 <AlertTriangle className="mt-0.5 size-3 shrink-0" />
@@ -737,7 +832,7 @@ export function LabWorkspace() {
             variant="outline"
             className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
             size="sm"
-            onClick={() => setResetOpen(true)}
+            onClick={resetAll}
           >
             <RotateCcw className="mr-1 size-3.5" />
             Reset Workspace
@@ -809,11 +904,31 @@ export function LabWorkspace() {
             </Button>
           </div>
         )}
+
+        <Button
+          variant={isPlaying ? "default" : "secondary"}
+          size="sm"
+          className={`ml-auto h-7 text-xs shadow-sm transition-colors ${isPlaying ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+          onClick={() => setIsPlaying((p) => !p)}
+        >
+          {isPlaying ? <Pause className="mr-1 size-3" /> : <Play className="mr-1 size-3" />}
+          {isPlaying ? "Pause" : "Animate"}
+        </Button>
       </div>
 
       {/* Charts */}
       <AnimatePresence mode="wait">
-        {chartLayout === "overlay" ? (
+        {showConvolutionAnimator && showConvolutionPreview ? (
+          <motion.div
+            key="convolution-animator"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ConvolutionAnimator baseData={baseData} gain={convGain} decay={convDecay} />
+          </motion.div>
+        ) : chartLayout === "overlay" ? (
           <motion.div
             key="overlay"
             initial={{ opacity: 0, y: 8 }}
@@ -869,6 +984,40 @@ export function LabWorkspace() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CollapsibleSection
+        title="Signal Analytics & Advanced Views"
+        icon={<Activity className="size-4 text-primary" />}
+      >
+        <div className="space-y-4">
+          <Tabs defaultValue="stats" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="stats" className="text-xs">Statistics</TabsTrigger>
+              <TabsTrigger value="spectrum" className="text-xs">Frequency Spectrum</TabsTrigger>
+              <TabsTrigger value="evenodd" className="text-xs">Even/Odd</TabsTrigger>
+            </TabsList>
+            <TabsContent value="stats" className="mt-4 grid gap-4 sm:grid-cols-2">
+              <SignalStatsPanel
+                stats={originalStats}
+                label="Original x(t)"
+              />
+              <SignalStatsPanel
+                stats={transformedStats}
+                label={showConvolutionPreview ? "Convolution y(t)" : "Transformed y(t)"}
+              />
+            </TabsContent>
+            <TabsContent value="spectrum" className="mt-4">
+              <SpectrumChart
+                bins={frequencySpectrum}
+                title={showConvolutionPreview ? "Spectrum of y(t) = x(t)*h(t)" : "Spectrum of y(t)"}
+              />
+            </TabsContent>
+            <TabsContent value="evenodd" className="mt-4">
+              <EvenOddChart data={evenOddData} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </CollapsibleSection>
 
       {/* Keyboard shortcuts hint */}
       <p className="text-center text-[10px] tracking-wide text-muted-foreground/60">

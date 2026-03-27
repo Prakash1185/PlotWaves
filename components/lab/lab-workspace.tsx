@@ -28,7 +28,13 @@ import { SignalChart, CHART_COLORS } from "@/components/lab/signal-chart"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +53,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -327,7 +334,7 @@ function CollapsibleSection({
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1">{children}</div>
+            <div className="px-4 pt-1 pb-4">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -407,8 +414,14 @@ export function LabWorkspace() {
     }
   }, [searchParams])
 
-  const baseData = useMemo(() => sampleSignal(signalType, params), [signalType, params])
-  const manualCompile = useMemo(() => compileManualEquation(manualExpression), [manualExpression])
+  const baseData = useMemo(
+    () => sampleSignal(signalType, params),
+    [signalType, params]
+  )
+  const manualCompile = useMemo(
+    () => compileManualEquation(manualExpression),
+    [manualExpression]
+  )
 
   const standardData = useMemo(() => {
     if (equationMode !== "manual" || !manualCompile.ok) {
@@ -442,7 +455,15 @@ export function LabWorkspace() {
       return "y(t) = " + (manualExpression.trim() || "0")
     }
     return formatEquation(signalType, params)
-  }, [showConvolutionPreview, convGain, convDecay, equationMode, manualExpression, signalType, params])
+  }, [
+    showConvolutionPreview,
+    convGain,
+    convDecay,
+    equationMode,
+    manualExpression,
+    signalType,
+    params,
+  ])
 
   const modelEquation = "y(t) = A_out · x(a · (t - t0))"
 
@@ -472,7 +493,10 @@ export function LabWorkspace() {
     return `A_out = ${formatVal(params.outputScale)}, a = ${formatVal(signedA)}, t0 = ${formatVal(params.shift)}`
   }, [params.outputScale, params.timeScale, params.timeReversal, params.shift])
 
-  const explanation = useMemo(() => getExplanation(params, signalType), [params, signalType])
+  const explanation = useMemo(
+    () => getExplanation(params, signalType),
+    [params, signalType]
+  )
 
   const convolutionStats = useMemo(() => {
     if (convolutionData.length === 0) return null
@@ -498,18 +522,30 @@ export function LabWorkspace() {
     }
   }, [convolutionData])
 
-  const originalStats = useMemo(() => computeSignalStats(data, "original"), [data])
-  const transformedStats = useMemo(() => computeSignalStats(data, "transformed"), [data])
+  const originalStats = useMemo(
+    () => computeSignalStats(data, "original"),
+    [data]
+  )
+  const transformedStats = useMemo(
+    () => computeSignalStats(data, "transformed"),
+    [data]
+  )
 
-  const frequencySpectrum = useMemo(() => computeFrequencySpectrum(data, "transformed"), [data])
+  const frequencySpectrum = useMemo(
+    () => computeFrequencySpectrum(data, "transformed"),
+    [data]
+  )
   const evenOddData = useMemo(() => {
     const dec = computeEvenOddDecomposition(data, "transformed")
     return data.map((d, i) => ({ t: d.t, even: dec.even[i], odd: dec.odd[i] }))
   }, [data])
 
-  const updateParam = useCallback(<K extends keyof SignalParams>(key: K, value: SignalParams[K]) => {
-    setParams((prev) => ({ ...prev, [key]: value }))
-  }, [])
+  const updateParam = useCallback(
+    <K extends keyof SignalParams>(key: K, value: SignalParams[K]) => {
+      setParams((prev) => ({ ...prev, [key]: value }))
+    },
+    []
+  )
 
   const openRangeSettings = useCallback(() => {
     setRangeDraft(ranges)
@@ -533,7 +569,11 @@ export function LabWorkspace() {
     const keys = Object.keys(rangeDraft) as RangeKey[]
     for (const key of keys) {
       const r = rangeDraft[key]
-      if (!Number.isFinite(r.min) || !Number.isFinite(r.max) || r.min >= r.max) {
+      if (
+        !Number.isFinite(r.min) ||
+        !Number.isFinite(r.max) ||
+        r.min >= r.max
+      ) {
         toast.error("Invalid range for " + key + ". Min must be less than max.")
         return
       }
@@ -543,12 +583,24 @@ export function LabWorkspace() {
 
     setParams((prev) => ({
       ...prev,
-      baseAmplitude: clamp(prev.baseAmplitude, rangeDraft.baseAmplitude.min, rangeDraft.baseAmplitude.max),
+      baseAmplitude: clamp(
+        prev.baseAmplitude,
+        rangeDraft.baseAmplitude.min,
+        rangeDraft.baseAmplitude.max
+      ),
       omega: clamp(prev.omega, rangeDraft.omega.min, rangeDraft.omega.max),
       phase: clamp(prev.phase, rangeDraft.phase.min, rangeDraft.phase.max),
       shift: clamp(prev.shift, rangeDraft.shift.min, rangeDraft.shift.max),
-      timeScale: clamp(prev.timeScale, rangeDraft.timeScale.min, rangeDraft.timeScale.max),
-      outputScale: clamp(prev.outputScale, rangeDraft.outputScale.min, rangeDraft.outputScale.max),
+      timeScale: clamp(
+        prev.timeScale,
+        rangeDraft.timeScale.min,
+        rangeDraft.timeScale.max
+      ),
+      outputScale: clamp(
+        prev.outputScale,
+        rangeDraft.outputScale.min,
+        rangeDraft.outputScale.max
+      ),
     }))
 
     toast.success("Parameter limits updated")
@@ -599,7 +651,10 @@ export function LabWorkspace() {
     let animId = 0
     let lastTime = 0
 
-    const periodic = signalType === "sine" || signalType === "cosine" || signalType === "square"
+    const periodic =
+      signalType === "sine" ||
+      signalType === "cosine" ||
+      signalType === "square"
 
     const loop = (time: number) => {
       if (!lastTime) lastTime = time
@@ -796,7 +851,9 @@ export function LabWorkspace() {
           checked={params.timeReversal}
           onCheckedChange={(checked) => {
             updateParam("timeReversal", checked)
-            toast.info(checked ? "Time reversal enabled" : "Time reversal disabled")
+            toast.info(
+              checked ? "Time reversal enabled" : "Time reversal disabled"
+            )
           }}
         />
       </div>
@@ -829,7 +886,8 @@ export function LabWorkspace() {
   const convolutionPanel = (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Preview convolution y(t) = x(t) * h(t) with causal exponential impulse response.
+        Preview convolution y(t) = x(t) * h(t) with causal exponential impulse
+        response.
       </p>
 
       <ParamSlider
@@ -862,10 +920,16 @@ export function LabWorkspace() {
           onCheckedChange={(checked) => {
             if (checked && equationMode === "manual") {
               setEquationMode("parametric")
-              toast.info("Manual mode disabled while convolution preview is active")
+              toast.info(
+                "Manual mode disabled while convolution preview is active"
+              )
             }
             setShowConvolutionPreview(checked)
-            toast.info(checked ? "Convolution preview enabled" : "Convolution preview disabled")
+            toast.info(
+              checked
+                ? "Convolution preview enabled"
+                : "Convolution preview disabled"
+            )
           }}
         />
       </div>
@@ -876,7 +940,10 @@ export function LabWorkspace() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground"
         >
-          <p>Peak: {convolutionStats.peakValue} at t = {convolutionStats.peakTime}</p>
+          <p>
+            Peak: {convolutionStats.peakValue} at t ={" "}
+            {convolutionStats.peakTime}
+          </p>
           <p>At t ≈ 0: {convolutionStats.atZero}</p>
         </motion.div>
       ) : null}
@@ -893,7 +960,9 @@ export function LabWorkspace() {
             }
           }}
         >
-          {showConvolutionAnimator ? "Hide Math Animation" : "Show Math Animation"}
+          {showConvolutionAnimator
+            ? "Hide Math Animation"
+            : "Show Math Animation"}
         </Button>
       )}
     </div>
@@ -903,14 +972,18 @@ export function LabWorkspace() {
     <div className="space-y-3">
       <Card className="border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Signal Generator</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Signal Generator
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">{generatorPanel}</CardContent>
       </Card>
 
       <Card className="border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Transformations</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Transformations
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">{transformPanel}</CardContent>
       </Card>
@@ -921,7 +994,9 @@ export function LabWorkspace() {
     <div className="space-y-3">
       <Card className="border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Equation Builder</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Equation Builder
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <Tabs
@@ -933,32 +1008,53 @@ export function LabWorkspace() {
                 toast.info("Convolution preview disabled for manual mode")
               }
               setEquationMode(next)
-              toast.info(next === "manual" ? "Manual equation mode" : "Parametric equation mode")
+              toast.info(
+                next === "manual"
+                  ? "Manual equation mode"
+                  : "Parametric equation mode"
+              )
             }}
           >
             <TabsList className="grid h-8 w-full grid-cols-2">
-              <TabsTrigger value="parametric" className="text-xs">Parametric</TabsTrigger>
-              <TabsTrigger value="manual" className="text-xs">Manual</TabsTrigger>
+              <TabsTrigger value="parametric" className="text-xs">
+                Parametric
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="text-xs">
+                Manual
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="parametric" className="space-y-2 pt-2">
               <div className="rounded-md border border-border/60 bg-muted/30 p-2.5">
-                <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Model</p>
+                <p className="mb-1 text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Model
+                </p>
                 <p className="font-mono text-xs">{modelEquation}</p>
               </div>
               <div className="rounded-md border border-border/60 bg-muted/30 p-2.5">
-                <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Base Signal</p>
+                <p className="mb-1 text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Base Signal
+                </p>
                 <p className="font-mono text-xs">{baseSignalEquation}</p>
               </div>
               <div className="rounded-md border border-border/60 bg-muted/40 p-2.5">
-                <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Current Parameters</p>
+                <p className="mb-1 text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Current Parameters
+                </p>
                 <p className="font-mono text-xs">{transformSubstitution}</p>
               </div>
               <div className="rounded-md border border-border/60 bg-primary/5 p-2.5">
-                <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Evaluated y(t)</p>
+                <p className="mb-1 text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Evaluated y(t)
+                </p>
                 <p className="font-mono text-xs">{equation}</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-7 w-full text-xs" onClick={copyEquation}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-full text-xs"
+                onClick={copyEquation}
+              >
                 <Copy className="mr-1 size-3" />
                 Copy equation
               </Button>
@@ -990,18 +1086,37 @@ export function LabWorkspace() {
               </div>
 
               <p className="text-[10px] text-muted-foreground">
-                Functions: sin, cos, tan, exp, log, ln, sqrt, abs, floor, ceil, round, sign, min, max, pi, e
+                Functions: sin, cos, tan, exp, log, ln, sqrt, abs, floor, ceil,
+                round, sign, min, max, pi, e
               </p>
 
-              <p className={manualCompile.ok ? "text-[10px] text-primary" : "text-[10px] text-destructive"}>
-                {manualCompile.ok ? "Valid expression applied" : manualCompile.error}
+              <p
+                className={
+                  manualCompile.ok
+                    ? "text-[10px] text-primary"
+                    : "text-[10px] text-destructive"
+                }
+              >
+                {manualCompile.ok
+                  ? "Valid expression applied"
+                  : manualCompile.error}
               </p>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-7 flex-1 text-xs" onClick={validateManualEquation}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 flex-1 text-xs"
+                  onClick={validateManualEquation}
+                >
                   Validate
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={copyEquation}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={copyEquation}
+                >
                   <Copy className="size-3" />
                 </Button>
               </div>
@@ -1012,7 +1127,9 @@ export function LabWorkspace() {
 
       <Card className="border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Concept Insight</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Concept Insight
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
           {explanation.map((entry, i) => (
@@ -1037,12 +1154,22 @@ export function LabWorkspace() {
           <Separator className="opacity-40" />
 
           <div className="flex flex-wrap gap-1.5">
-            <Badge variant="secondary" className="text-[10px]">{signalType}</Badge>
-            <Badge variant="outline" className="text-[10px]">a = {params.timeScale.toFixed(2)}</Badge>
-            <Badge variant="outline" className="text-[10px]">t0 = {params.shift.toFixed(2)}</Badge>
-            <Badge variant="outline" className="text-[10px]">A_out = {params.outputScale.toFixed(2)}</Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              {signalType}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">
+              a = {params.timeScale.toFixed(2)}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">
+              t0 = {params.shift.toFixed(2)}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">
+              A_out = {params.outputScale.toFixed(2)}
+            </Badge>
             {params.timeReversal && (
-              <Badge variant="destructive" className="text-[10px]">Reversed</Badge>
+              <Badge variant="destructive" className="text-[10px]">
+                Reversed
+              </Badge>
             )}
           </div>
         </CardContent>
@@ -1054,21 +1181,32 @@ export function LabWorkspace() {
       >
         <div className="space-y-4">
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Sampling</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              Sampling
+            </p>
             {samplingPanel}
           </div>
           <Separator className="opacity-40" />
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground">Parameter Ranges</p>
-              <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={openRangeSettings}>
+              <p className="text-xs font-medium text-muted-foreground">
+                Parameter Ranges
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px]"
+                onClick={openRangeSettings}
+              >
                 Configure
               </Button>
             </div>
           </div>
           <Separator className="opacity-40" />
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Convolution Preview</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              Convolution Preview
+            </p>
             {convolutionPanel}
           </div>
         </div>
@@ -1132,7 +1270,11 @@ export function LabWorkspace() {
                 toast.info(!showOriginal ? "Original shown" : "Original hidden")
               }}
             >
-              {showOriginal ? <Eye className="mr-1 size-3" /> : <EyeOff className="mr-1 size-3" />}
+              {showOriginal ? (
+                <Eye className="mr-1 size-3" />
+              ) : (
+                <EyeOff className="mr-1 size-3" />
+              )}
               x(t)
             </Button>
             <Button
@@ -1141,10 +1283,16 @@ export function LabWorkspace() {
               className="h-7 text-xs"
               onClick={() => {
                 setShowTransformed((p) => !p)
-                toast.info(!showTransformed ? "Transformed shown" : "Transformed hidden")
+                toast.info(
+                  !showTransformed ? "Transformed shown" : "Transformed hidden"
+                )
               }}
             >
-              {showTransformed ? <Eye className="mr-1 size-3" /> : <EyeOff className="mr-1 size-3" />}
+              {showTransformed ? (
+                <Eye className="mr-1 size-3" />
+              ) : (
+                <EyeOff className="mr-1 size-3" />
+              )}
               y(t)
             </Button>
           </div>
@@ -1160,7 +1308,11 @@ export function LabWorkspace() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            <ConvolutionAnimator baseData={baseData} gain={convGain} decay={convDecay} />
+            <ConvolutionAnimator
+              baseData={baseData}
+              gain={convGain}
+              decay={convDecay}
+            />
           </motion.div>
         ) : chartLayout === "overlay" ? (
           <motion.div
@@ -1204,8 +1356,16 @@ export function LabWorkspace() {
               <SignalChart
                 mode="single"
                 data={data}
-                title={showConvolutionPreview ? "Convolution y(t) = x(t) * h(t)" : "Transformed Signal y(t)"}
-                subtitle={showConvolutionPreview ? "Convolution preview output" : "After shift, scale, and reversal"}
+                title={
+                  showConvolutionPreview
+                    ? "Convolution y(t) = x(t) * h(t)"
+                    : "Transformed Signal y(t)"
+                }
+                subtitle={
+                  showConvolutionPreview
+                    ? "Convolution preview output"
+                    : "After shift, scale, and reversal"
+                }
                 seriesKey="transformed"
                 stroke={CHART_COLORS.transformed}
                 fileName="transformed-signal.png"
@@ -1222,21 +1382,38 @@ export function LabWorkspace() {
         <div className="space-y-4">
           <Tabs defaultValue="stats" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="stats" className="text-xs">Statistics</TabsTrigger>
-              <TabsTrigger value="spectrum" className="text-xs">Frequency Spectrum</TabsTrigger>
-              <TabsTrigger value="evenodd" className="text-xs">Even/Odd</TabsTrigger>
+              <TabsTrigger value="stats" className="text-xs">
+                Statistics
+              </TabsTrigger>
+              <TabsTrigger value="spectrum" className="text-xs">
+                Frequency Spectrum
+              </TabsTrigger>
+              <TabsTrigger value="evenodd" className="text-xs">
+                Even/Odd
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="stats" className="mt-4 grid gap-4 sm:grid-cols-2">
+            <TabsContent
+              value="stats"
+              className="mt-4 grid gap-4 sm:grid-cols-2"
+            >
               <SignalStatsPanel stats={originalStats} label="Original x(t)" />
               <SignalStatsPanel
                 stats={transformedStats}
-                label={showConvolutionPreview ? "Convolution y(t)" : "Transformed y(t)"}
+                label={
+                  showConvolutionPreview
+                    ? "Convolution y(t)"
+                    : "Transformed y(t)"
+                }
               />
             </TabsContent>
             <TabsContent value="spectrum" className="mt-4">
               <SpectrumChart
                 bins={frequencySpectrum}
-                title={showConvolutionPreview ? "Spectrum of y(t) = x(t)*h(t)" : "Spectrum of y(t)"}
+                title={
+                  showConvolutionPreview
+                    ? "Spectrum of y(t) = x(t)*h(t)"
+                    : "Spectrum of y(t)"
+                }
               />
             </TabsContent>
             <TabsContent value="evenodd" className="mt-4">
@@ -1264,19 +1441,32 @@ export function LabWorkspace() {
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-semibold tracking-tight sm:text-lg">PlotWaves</h1>
-                <Badge variant="outline" className="text-[10px]">V1</Badge>
+                <h1 className="text-base font-semibold tracking-tight sm:text-lg">
+                  PlotWaves
+                </h1>
+                <Badge variant="outline" className="text-[10px]">
+                  V1
+                </Badge>
               </div>
-             
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={openRangeSettings}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={openRangeSettings}
+            >
               <Settings2 className="mr-1 size-3.5" />
               Limits
             </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowShortcuts(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setShowShortcuts(true)}
+            >
               ?
             </Button>
             <ThemeToggle />
@@ -1322,23 +1512,41 @@ export function LabWorkspace() {
                 Controls
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Lab Controls</SheetTitle>
+            <SheetContent
+              side="bottom"
+              showCloseButton={false}
+              className="h-[92dvh] max-h-[92dvh] overflow-hidden p-0"
+            >
+              <SheetHeader className="border-b border-border/60 bg-background/95 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <SheetTitle>Lab Controls</SheetTitle>
+                  <SheetClose asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                    >
+                      Close
+                    </Button>
+                  </SheetClose>
+                </div>
               </SheetHeader>
-              <div className="mt-4 space-y-4">
+
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
                 <Card className="border-border/60">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">Signal Generator</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">{generatorPanel}</CardContent>
                 </Card>
+
                 <Card className="border-border/60">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">Transformations</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">{transformPanel}</CardContent>
                 </Card>
+
                 {rightSidebar}
               </div>
             </SheetContent>
@@ -1364,91 +1572,109 @@ export function LabWorkspace() {
       </div>
 
       <AlertDialog open={isRangeModalOpen} onOpenChange={setRangeModalOpen}>
-        <AlertDialogContent className="max-w-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Parameter Limits</AlertDialogTitle>
-            <AlertDialogDescription>
-              Set min and max values for base and transformation controls.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        <AlertDialogContent className="w-[calc(100vw-0.75rem)] max-w-3xl overflow-hidden p-0 sm:w-full">
+          <div className="flex max-h-[92dvh] flex-col">
+            <AlertDialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 sm:px-5 sm:py-4">
+              <AlertDialogTitle>Parameter Limits</AlertDialogTitle>
+              <AlertDialogDescription>
+                Set min and max values for base and transformation controls.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-md border border-border/60 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Base Parameters</p>
-              <div className="grid grid-cols-[1fr,92px,92px] gap-2 text-[10px] text-muted-foreground">
-                <span />
-                <span>Min</span>
-                <span>Max</span>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3 rounded-md border border-border/60 p-3">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Base Parameters
+                  </p>
+                  <div className="grid grid-cols-[1fr,92px,92px] gap-2 text-[10px] text-muted-foreground">
+                    <span />
+                    <span>Min</span>
+                    <span>Max</span>
+                  </div>
+
+                  <RangeRow
+                    label="Base Amplitude"
+                    min={rangeDraft.baseAmplitude.min}
+                    max={rangeDraft.baseAmplitude.max}
+                    onMinChange={(v) =>
+                      updateRangeDraft("baseAmplitude", "min", v)
+                    }
+                    onMaxChange={(v) =>
+                      updateRangeDraft("baseAmplitude", "max", v)
+                    }
+                  />
+                  <RangeRow
+                    label="Omega"
+                    min={rangeDraft.omega.min}
+                    max={rangeDraft.omega.max}
+                    onMinChange={(v) => updateRangeDraft("omega", "min", v)}
+                    onMaxChange={(v) => updateRangeDraft("omega", "max", v)}
+                  />
+                  <RangeRow
+                    label="Phase"
+                    min={rangeDraft.phase.min}
+                    max={rangeDraft.phase.max}
+                    onMinChange={(v) => updateRangeDraft("phase", "min", v)}
+                    onMaxChange={(v) => updateRangeDraft("phase", "max", v)}
+                  />
+                </div>
+
+                <div className="space-y-3 rounded-md border border-border/60 p-3">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Transform Parameters
+                  </p>
+                  <div className="grid grid-cols-[1fr,92px,92px] gap-2 text-[10px] text-muted-foreground">
+                    <span />
+                    <span>Min</span>
+                    <span>Max</span>
+                  </div>
+
+                  <RangeRow
+                    label="Time Shift (t0)"
+                    min={rangeDraft.shift.min}
+                    max={rangeDraft.shift.max}
+                    onMinChange={(v) => updateRangeDraft("shift", "min", v)}
+                    onMaxChange={(v) => updateRangeDraft("shift", "max", v)}
+                  />
+                  <RangeRow
+                    label="Time Scale (a)"
+                    min={rangeDraft.timeScale.min}
+                    max={rangeDraft.timeScale.max}
+                    onMinChange={(v) => updateRangeDraft("timeScale", "min", v)}
+                    onMaxChange={(v) => updateRangeDraft("timeScale", "max", v)}
+                  />
+                  <RangeRow
+                    label="Output Scale (A_out)"
+                    min={rangeDraft.outputScale.min}
+                    max={rangeDraft.outputScale.max}
+                    onMinChange={(v) =>
+                      updateRangeDraft("outputScale", "min", v)
+                    }
+                    onMaxChange={(v) =>
+                      updateRangeDraft("outputScale", "max", v)
+                    }
+                  />
+                </div>
               </div>
-
-              <RangeRow
-                label="Base Amplitude"
-                min={rangeDraft.baseAmplitude.min}
-                max={rangeDraft.baseAmplitude.max}
-                onMinChange={(v) => updateRangeDraft("baseAmplitude", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("baseAmplitude", "max", v)}
-              />
-              <RangeRow
-                label="Omega"
-                min={rangeDraft.omega.min}
-                max={rangeDraft.omega.max}
-                onMinChange={(v) => updateRangeDraft("omega", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("omega", "max", v)}
-              />
-              <RangeRow
-                label="Phase"
-                min={rangeDraft.phase.min}
-                max={rangeDraft.phase.max}
-                onMinChange={(v) => updateRangeDraft("phase", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("phase", "max", v)}
-              />
             </div>
 
-            <div className="space-y-3 rounded-md border border-border/60 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Transform Parameters</p>
-              <div className="grid grid-cols-[1fr,92px,92px] gap-2 text-[10px] text-muted-foreground">
-                <span />
-                <span>Min</span>
-                <span>Max</span>
-              </div>
-
-              <RangeRow
-                label="Time Shift (t0)"
-                min={rangeDraft.shift.min}
-                max={rangeDraft.shift.max}
-                onMinChange={(v) => updateRangeDraft("shift", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("shift", "max", v)}
-              />
-              <RangeRow
-                label="Time Scale (a)"
-                min={rangeDraft.timeScale.min}
-                max={rangeDraft.timeScale.max}
-                onMinChange={(v) => updateRangeDraft("timeScale", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("timeScale", "max", v)}
-              />
-              <RangeRow
-                label="Output Scale (A_out)"
-                min={rangeDraft.outputScale.min}
-                max={rangeDraft.outputScale.max}
-                onMinChange={(v) => updateRangeDraft("outputScale", "min", v)}
-                onMaxChange={(v) => updateRangeDraft("outputScale", "max", v)}
-              />
-            </div>
+            <AlertDialogFooter className="mx-0 mt-0 mb-0 shrink-0 rounded-none border-t border-border/60 bg-background/95 px-4 py-3 sm:px-5">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRangeDraft(defaultRanges)
+                  toast.info("Limits reset to defaults")
+                }}
+              >
+                Reset Limits
+              </Button>
+              <AlertDialogAction onClick={applyRangeSettings}>
+                Apply Limits
+              </AlertDialogAction>
+            </AlertDialogFooter>
           </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRangeDraft(defaultRanges)
-                toast.info("Limits reset to defaults")
-              }}
-            >
-              Reset Limits
-            </Button>
-            <AlertDialogAction onClick={applyRangeSettings}>Apply Limits</AlertDialogAction>
-          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -1456,7 +1682,9 @@ export function LabWorkspace() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Keyboard Shortcuts</AlertDialogTitle>
-            <AlertDialogDescription>Quick controls for faster lab workflow.</AlertDialogDescription>
+            <AlertDialogDescription>
+              Quick controls for faster lab workflow.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>Space: Play or pause animation</p>
@@ -1468,7 +1696,9 @@ export function LabWorkspace() {
             <p>?: Show this shortcuts dialog</p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowShortcuts(false)}>Close</AlertDialogAction>
+            <AlertDialogAction onClick={() => setShowShortcuts(false)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1478,7 +1708,8 @@ export function LabWorkspace() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset all controls?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will restore all signal parameters, transformations, and view settings.
+              This will restore all signal parameters, transformations, and view
+              settings.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { GithubIcon } from "@hugeicons/core-free-icons"
 import { Footer } from "@/components/footer"
+import Image from "next/image"
 
 const features = [
   {
@@ -84,11 +85,14 @@ function HomeHeader() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex w-full max-w-5xl items-center justify-between rounded-xl  px-4 py-3 bg-background/40 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5 dark:shadow-black/30"
+        className="flex w-full max-w-5xl items-center justify-between rounded-xl border border-border/50 bg-background/40 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl dark:shadow-black/30"
       >
-        <span className="text-lg font-bold tracking-tight sm:text-xl md:text-2xl">
-          PlotWaves
-        </span>
+        <div className="flex justify-center items-center gap-1.5">
+          <Image src={"/logo.png"} height={35} width={35} alt="Logo" className="rounded-md"/>
+          <span className="text-lg font-bold tracking-tight sm:text-xl md:text-2xl">
+            PlotWaves
+          </span>
+        </div>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -163,7 +167,7 @@ function HeroSection() {
           <Button
             asChild
             size="lg"
-            className="gap-2 px-6 py-5 shadow-lg shadow-primary/20 "
+            className="gap-2 px-6 py-5 shadow-lg shadow-primary/20"
           >
             <Link href="/lab">
               Open Lab
@@ -221,7 +225,7 @@ function FeatureSection() {
             <Card className="group h-full border-border/40 bg-card/40 backdrop-blur-md transition-all duration-300 hover:border-primary/30 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5">
               <CardContent className="flex flex-col gap-3 pt-2">
                 <div className="mb-2 flex items-center gap-3">
-                  <div className="rounded bg-[oklch(0.68_0.18_25/0.1)] text-[oklch(0.68_0.18_25)] p-2.5 ring-1 ring-primary/20 transition-colors group-hover:bg-primary/20">
+                  <div className="rounded bg-[oklch(0.68_0.18_25/0.1)] p-2.5 text-[oklch(0.68_0.18_25)] ring-1 ring-primary/20 transition-colors group-hover:bg-primary/20">
                     <feature.icon className="size-5 text-primary" />
                   </div>
                   <h3 className="inter text-base font-semibold">

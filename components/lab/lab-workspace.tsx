@@ -1149,21 +1149,6 @@ export function LabWorkspace() {
             </Button>
           </div>
         )}
-
-        <Button
-          variant={isPlaying ? "default" : "secondary"}
-          size="sm"
-          className={`ml-auto h-7 text-xs shadow-sm transition-colors ${
-            isPlaying ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""
-          }`}
-          onClick={() => {
-            setIsPlaying((p) => !p)
-            toast.info(!isPlaying ? "Animation playing" : "Animation paused")
-          }}
-        >
-          {isPlaying ? <Pause className="mr-1 size-3" /> : <Play className="mr-1 size-3" />}
-          {isPlaying ? "Pause" : "Animate"}
-        </Button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -1279,10 +1264,10 @@ export function LabWorkspace() {
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-semibold tracking-tight sm:text-lg">Signal Systems Lab</h1>
+                <h1 className="text-base font-semibold tracking-tight sm:text-lg">PlotWaves</h1>
                 <Badge variant="outline" className="text-[10px]">V1</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Interactive workspace</p>
+             
             </div>
           </div>
 

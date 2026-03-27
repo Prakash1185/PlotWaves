@@ -62,13 +62,17 @@ function getStageDescription(stage: Stage): string {
   }
 }
 
-function getVisibility(stage: Stage, guidedMode: boolean, manual: {
-  showX: boolean
-  showH: boolean
-  showHFlipped: boolean
-  showHShifted: boolean
-  showProduct: boolean
-}) {
+function getVisibility(
+  stage: Stage,
+  guidedMode: boolean,
+  manual: {
+    showX: boolean
+    showH: boolean
+    showHFlipped: boolean
+    showHShifted: boolean
+    showProduct: boolean
+  }
+) {
   if (!guidedMode) return manual
 
   if (stage === "signal") {
@@ -240,7 +244,8 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
     })
   }, [baseData, gain, decay, t])
 
-  const dt = baseData.length > 1 ? Math.abs(baseData[1].t - baseData[0].t) : 0.05
+  const dt =
+    baseData.length > 1 ? Math.abs(baseData[1].t - baseData[0].t) : 0.05
   const integralValue = useMemo(
     () => chartData.reduce((sum, d) => sum + d.product * dt, 0),
     [chartData, dt]
@@ -253,7 +258,9 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
       <CardHeader className="space-y-3 pb-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-sm font-semibold">Convolution Animation</CardTitle>
+            <CardTitle className="text-sm font-semibold">
+              Convolution Animation
+            </CardTitle>
             <p className="mt-0.5 font-mono text-xs text-muted-foreground">
               y(t) = ∫ x(τ) h(t - τ) dτ
             </p>
@@ -266,7 +273,10 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
             <div className="rounded-md border border-border/50 bg-muted/40 px-3 py-1 text-center font-mono text-xs">
               t = {t.toFixed(2)}
               <br />
-              y(t) = <span className="font-bold text-primary">{integralValue.toFixed(3)}</span>
+              y(t) ={" "}
+              <span className="font-bold text-primary">
+                {integralValue.toFixed(3)}
+              </span>
             </div>
 
             <Button
@@ -275,7 +285,11 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
               className="h-8"
               onClick={() => setIsPlaying((p) => !p)}
             >
-              {isPlaying ? <Pause className="mr-1 size-3.5" /> : <Play className="mr-1 size-3.5" />}
+              {isPlaying ? (
+                <Pause className="mr-1 size-3.5" />
+              ) : (
+                <Play className="mr-1 size-3.5" />
+              )}
               {isPlaying ? "Pause" : "Play"}
             </Button>
           </div>
@@ -296,7 +310,9 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
               setGuidedMode(checked)
             }}
           />
-          <Badge variant={guidedMode ? "secondary" : "outline"}>{guidedMode ? "Guided" : "Manual"}</Badge>
+          <Badge variant={guidedMode ? "secondary" : "outline"}>
+            {guidedMode ? "Guided" : "Manual"}
+          </Badge>
           <Button
             variant="outline"
             size="sm"
@@ -332,7 +348,9 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
           ))}
         </div>
 
-        <p className="text-[11px] text-muted-foreground">{getStageDescription(stage)}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {getStageDescription(stage)}
+        </p>
 
         {!guidedMode ? (
           <>
@@ -340,19 +358,43 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               <ToggleRow label="x(τ)" checked={showX} onChange={setShowX} />
               <ToggleRow label="h(τ)" checked={showH} onChange={setShowH} />
-              <ToggleRow label="h(-τ)" checked={showHFlipped} onChange={setShowHFlipped} />
-              <ToggleRow label="h(t-τ)" checked={showHShifted} onChange={setShowHShifted} />
-              <ToggleRow label="x(τ)h(t-τ)" checked={showProduct} onChange={setShowProduct} />
+              <ToggleRow
+                label="h(-τ)"
+                checked={showHFlipped}
+                onChange={setShowHFlipped}
+              />
+              <ToggleRow
+                label="h(t-τ)"
+                checked={showHShifted}
+                onChange={setShowHShifted}
+              />
+              <ToggleRow
+                label="x(τ)h(t-τ)"
+                checked={showProduct}
+                onChange={setShowProduct}
+              />
             </div>
           </>
         ) : null}
       </CardHeader>
 
-      <CardContent className="space-y-3 pb-3 pt-0">
+      <CardContent className="space-y-3 pt-0 pb-3">
         <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <ComposedChart data={chartData} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.4} />
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={0}
+          >
+            <ComposedChart
+              data={chartData}
+              margin={{ left: 4, right: 8, top: 8, bottom: 4 }}
+            >
+              <CartesianGrid
+                stroke="var(--border)"
+                strokeDasharray="3 3"
+                strokeOpacity={0.4}
+              />
               <XAxis
                 dataKey="tau"
                 stroke="var(--muted-foreground)"
@@ -380,22 +422,48 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
                 labelFormatter={(value) => `τ = ${Number(value).toFixed(3)}`}
-                formatter={(value: number, name: string) => {
-                  if (name === "x_tau") return [Number(value).toFixed(4), "x(τ)"]
-                  if (name === "h_tau") return [Number(value).toFixed(4), "h(τ)"]
-                  if (name === "h_flipped") return [Number(value).toFixed(4), "h(-τ)"]
-                  if (name === "h_shifted") return [Number(value).toFixed(4), "h(t-τ)"]
-                  return [Number(value).toFixed(4), "x(τ)h(t-τ)"]
+                formatter={(value, name) => {
+                  const numeric =
+                    typeof value === "number"
+                      ? value
+                      : typeof value === "string"
+                        ? Number(value)
+                        : Array.isArray(value)
+                          ? Number(value[0] ?? 0)
+                          : 0
+
+                  const key = String(name)
+
+                  if (key === "x_tau") return [numeric.toFixed(4), "x(τ)"]
+                  if (key === "h_tau") return [numeric.toFixed(4), "h(τ)"]
+                  if (key === "h_flipped") return [numeric.toFixed(4), "h(-τ)"]
+                  if (key === "h_shifted") return [numeric.toFixed(4), "h(t-τ)"]
+                  return [numeric.toFixed(4), "x(τ)h(t-τ)"]
                 }}
               />
-              <ReferenceLine x={0} stroke="var(--muted-foreground)" strokeOpacity={0.45} strokeDasharray="4 4" />
-              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.45} strokeDasharray="4 4" />
+              <ReferenceLine
+                x={0}
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.45}
+                strokeDasharray="4 4"
+              />
+              <ReferenceLine
+                y={0}
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.45}
+                strokeDasharray="4 4"
+              />
               <ReferenceLine
                 x={Number(t.toFixed(4))}
                 stroke="var(--primary)"
                 strokeOpacity={0.7}
                 strokeDasharray="6 3"
-                label={{ value: "t", position: "top", fill: "var(--primary)", fontSize: 11 }}
+                label={{
+                  value: "t",
+                  position: "top",
+                  fill: "var(--primary)",
+                  fontSize: 11,
+                }}
               />
 
               {visibility.showProduct ? (
@@ -478,7 +546,8 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
         <div className="rounded-md border border-border/60 bg-muted/20 p-3 text-xs">
           <p className="font-medium">Math Check (Step * Step = Ramp)</p>
           <p className="mt-1 text-muted-foreground">
-            Numerical sanity test: y(t) = ∫u(τ)u(t-τ)dτ should approximate t for t ≥ 0.
+            Numerical sanity test: y(t) = ∫u(τ)u(t-τ)dτ should approximate t for
+            t ≥ 0.
           </p>
           <div className="mt-2 flex items-center gap-2">
             <Badge variant={sanity.pass ? "secondary" : "destructive"}>

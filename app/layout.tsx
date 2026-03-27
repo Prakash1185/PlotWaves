@@ -13,6 +13,7 @@ import { AppToaster } from "@/components/app-toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Footer } from "@/components/footer"
 import { Metadata } from "next"
+import { Analytics } from "@vercel/analytics/react"
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -70,6 +71,7 @@ export default function RootLayout({
             {children}
             <Footer />
           </TooltipProvider>
+          <Analytics/>
         </ThemeProvider>
       </body>
     </html>

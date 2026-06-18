@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowLeft, Copy, PanelRight, RotateCcw } from "lucide-react"
+import { ArrowLeft, CircleHelp, Copy, PanelRight, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -16,6 +16,8 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +46,9 @@ import { SignalParams, SignalType } from "@/types/signal"
 import { sampleSignal } from "@/lib/services/signal/sample-signal"
 import { formatEquation } from "@/lib/services/equation/format-equation"
 import { getExplanation } from "@/lib/services/explanation/get-explanation"
+import { compileManualEquation } from "@/lib/services/equation/manual-evaluator"
+
+type EquationMode = "parametric" | "manual"
 
 const defaults: SignalParams = {
   baseAmplitude: 1,
@@ -74,8 +79,33 @@ export function LabWorkspace() {
   const [isResetOpen, setResetOpen] = useState(false)
   const [isControlsOpen, setControlsOpen] = useState(false)
 
-  const data = useMemo(() => sampleSignal(signalType, params), [signalType, params])
-  const equation = useMemo(() => formatEquation(signalType, params), [signalType, params])
+  const [equationMode, setEquationMode] = useState<EquationMode>("parametric")
+  const [manualExpression, setManualExpression] = useState("0")
+
+  const baseData = useMemo(() => sampleSignal(signalType, params), [signalType, params])
+  const manualCompile = useMemo(() => compileManualEquation(manualExpression), [manualExpression])
+
+  const data = useMemo(() => {
+    if (equationMode !== "manual" || !manualCompile.ok) {
+      return baseData
+    }
+
+    return baseData.map((point) => {
+      const value = manualCompile.fn(point.t)
+      return {
+        ...point,
+        transformed: Number(value.toFixed(6)),
+      }
+    })
+  }, [baseData, equationMode, manualCompile])
+
+  const equation = useMemo(() => {
+    if (equationMode === "manual") {
+      return "y(t) = " + (manualExpression.trim() || "0")
+    }
+    return formatEquation(signalType, params)
+  }, [equationMode, manualExpression, signalType, params])
+
   const explanation = useMemo(() => getExplanation(params), [params])
 
   function updateParam<K extends keyof SignalParams>(key: K, value: SignalParams[K]) {
@@ -85,12 +115,27 @@ export function LabWorkspace() {
   function resetAll() {
     setParams(defaults)
     setSignalType("sine")
+    setEquationMode("parametric")
+    setManualExpression("0")
     toast.success("Workspace reset to defaults")
   }
 
   function copyEquation() {
     navigator.clipboard.writeText(equation)
     toast.success("Equation copied")
+  }
+
+  function validateManualEquation() {
+    if (equationMode !== "manual") {
+      toast.info("Switch to Manual mode first")
+      return
+    }
+
+    if (manualCompile.ok) {
+      toast.success("Manual equation is valid and applied")
+    } else {
+      toast.error(manualCompile.error)
+    }
   }
 
   useEffect(() => {
@@ -130,7 +175,10 @@ export function LabWorkspace() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="mb-2 text-sm font-medium">Signal type</p>
+          <InfoLabel
+            label="Signal type"
+            tip="Select the base signal family used for x(t). This drives the shape before transformation."
+          />
           <Select
             value={signalType}
             onValueChange={(v: SignalType) => {
@@ -138,7 +186,7 @@ export function LabWorkspace() {
               toast.info("Signal changed to " + v)
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="mt-2">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -154,6 +202,7 @@ export function LabWorkspace() {
 
         <ParamSlider
           label="Base Amplitude"
+          tip="Amplitude of the original signal x(t)."
           value={params.baseAmplitude}
           min={0}
           max={5}
@@ -162,6 +211,7 @@ export function LabWorkspace() {
         />
         <ParamSlider
           label="Omega"
+          tip="Angular frequency omega in rad/s. Larger values increase oscillation rate."
           value={params.omega}
           min={0.1}
           max={10}
@@ -170,6 +220,7 @@ export function LabWorkspace() {
         />
         <ParamSlider
           label="Phase"
+          tip="Phase offset phi in radians."
           value={params.phase}
           min={-6.28}
           max={6.28}
@@ -188,16 +239,19 @@ export function LabWorkspace() {
       <CardContent className="space-y-3">
         <ParamInput
           label="Min time"
+          tip="Left boundary of time axis."
           value={params.minTime}
           onChange={(v) => updateParam("minTime", v)}
         />
         <ParamInput
           label="Max time"
+          tip="Right boundary of time axis."
           value={params.maxTime}
           onChange={(v) => updateParam("maxTime", v)}
         />
         <ParamInput
           label="Step"
+          tip="Time resolution delta t used to sample points."
           value={params.step}
           onChange={(v) => updateParam("step", Math.max(0.01, v))}
         />
@@ -213,6 +267,7 @@ export function LabWorkspace() {
       <CardContent className="space-y-4">
         <ParamSlider
           label="Shift t0"
+          tip="Time shift inside x(a(t - t0)). Positive moves the signal right."
           value={params.shift}
           min={-5}
           max={5}
@@ -221,6 +276,7 @@ export function LabWorkspace() {
         />
         <ParamSlider
           label="Time scale a"
+          tip="Controls compression or expansion in time."
           value={params.timeScale}
           min={0.1}
           max={4}
@@ -229,6 +285,7 @@ export function LabWorkspace() {
         />
         <ParamSlider
           label="Output scale Aout"
+          tip="Scales transformed amplitude y(t)."
           value={params.outputScale}
           min={0}
           max={4}
@@ -239,7 +296,10 @@ export function LabWorkspace() {
         <Separator />
 
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">Time reversal</p>
+          <InfoLabel
+            label="Time reversal"
+            tip="Mirrors the signal around t = 0 by replacing t with -t."
+          />
           <Switch
             checked={params.timeReversal}
             onCheckedChange={(checked) => {
@@ -268,7 +328,7 @@ export function LabWorkspace() {
   )
 
   return (
-    <TooltipProvider delayDuration={150}>
+    <TooltipProvider delayDuration={120}>
       <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:pb-6">
         <header className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -304,29 +364,105 @@ export function LabWorkspace() {
             transition={{ duration: 0.3, ease: "easeOut", delay: 0.04 }}
             className="space-y-4 lg:col-span-6"
           >
-            <SignalChart data={data} />
+            <div className="grid grid-cols-1 gap-4">
+              <SignalChart
+                data={data}
+                title="Original Signal x(t)"
+                subtitle="Base signal before transformations"
+                seriesKey="original"
+                stroke="var(--foreground)"
+                fileName="original-signal.png"
+              />
+              <SignalChart
+                data={data}
+                title="Transformed Signal y(t)"
+                subtitle="Result after shift, scale, and reversal"
+                seriesKey="transformed"
+                stroke="var(--destructive)"
+                fileName="transformed-signal.png"
+              />
+            </div>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Equation</CardTitle>
+                <CardTitle className="text-base">
+                  <InfoLabel
+                    label="Equation"
+                    tip="Current mathematical form generated from control settings."
+                  />
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="rounded-md border border-border bg-muted/40 p-3 text-sm">{equation}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                <Tabs
+                  value={equationMode}
+                  onValueChange={(value) => {
+                    const next = value as EquationMode
+                    setEquationMode(next)
+                    toast.info(
+                      next === "manual"
+                        ? "Manual equation mode enabled"
+                        : "Parametric equation mode enabled"
+                    )
+                  }}
+                >
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="parametric">Parametric</TabsTrigger>
+                    <TabsTrigger value="manual">Manual</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="parametric" className="space-y-3 pt-2">
+                    <p className="rounded-md border border-border bg-muted/40 p-3 text-sm">{equation}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" onClick={copyEquation}>
+                            <Copy className="size-4" />
+                            Copy equation
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Shortcut: C</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="manual" className="space-y-3 pt-2">
+                    <InfoLabel
+                      label="Manual expression y(t)"
+                      tip="Use variable t. Example: 2*sin(3*(t-1)). Use explicit multiplication like 2*t."
+                    />
+                    <Textarea
+                      value={manualExpression}
+                      onChange={(event) => setManualExpression(event.target.value)}
+                      placeholder="Example: 2*sin(3*(t-1))"
+                      className="min-h-24 font-mono text-sm"
+                    />
+
+                    <p className="text-xs text-muted-foreground">
+                      Supported: sin, cos, tan, exp, log, ln, sqrt, abs, floor, ceil, round, sign, min,
+                      max, pi, e, operators + - * / ^.
+                    </p>
+
+                    <p className={manualCompile.ok ? "text-xs text-primary" : "text-xs text-destructive"}>
+                      {manualCompile.ok
+                        ? "Expression valid. Transformed graph now uses manual y(t)."
+                        : manualCompile.error}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" onClick={validateManualEquation}>
+                        Validate expression
+                      </Button>
                       <Button variant="outline" onClick={copyEquation}>
                         <Copy className="size-4" />
                         Copy equation
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Shortcut: C</TooltipContent>
-                  </Tooltip>
+                    </div>
+                  </TabsContent>
+                </Tabs>
 
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    Shortcuts: C copy, R reset, K controls
-                  </Button>
-                </div>
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  Shortcuts: C copy, R reset, K controls
+                </Button>
               </CardContent>
             </Card>
           </motion.section>
@@ -415,8 +551,31 @@ export function LabWorkspace() {
   )
 }
 
+function InfoLabel({ label, tip }: { label: string; tip: string }) {
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <span className="text-sm font-medium">{label}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={"More info about " + label}
+          >
+            <CircleHelp className="size-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-72">
+          <p>{tip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
+
 function ParamSlider({
   label,
+  tip,
   value,
   min,
   max,
@@ -424,6 +583,7 @@ function ParamSlider({
   onChange,
 }: {
   label: string
+  tip: string
   value: number
   min: number
   max: number
@@ -433,7 +593,7 @@ function ParamSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">{label}</p>
+        <InfoLabel label={label} tip={tip} />
         <span className="text-xs text-muted-foreground">{value.toFixed(2)}</span>
       </div>
       <Slider value={[value]} min={min} max={max} step={step} onValueChange={(v) => onChange(v[0] ?? value)} />
@@ -443,16 +603,18 @@ function ParamSlider({
 
 function ParamInput({
   label,
+  tip,
   value,
   onChange,
 }: {
   label: string
+  tip: string
   value: number
   onChange: (next: number) => void
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium">{label}</p>
+      <InfoLabel label={label} tip={tip} />
       <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
   )

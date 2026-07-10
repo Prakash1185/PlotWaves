@@ -50,7 +50,7 @@ export function SpectrumChart({
       </CardHeader>
       <CardContent className="pb-3 pt-0">
         <div className="h-44 w-full sm:h-48">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <BarChart data={filtered} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.4} />
               <XAxis
@@ -81,7 +81,7 @@ export function SpectrumChart({
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
                 labelFormatter={(v) => `f = ${Number(v).toFixed(3)} Hz`}
-                formatter={(v: number) => [v.toFixed(4), "|X(f)|"]}
+                formatter={(v: any) => [Number(v).toFixed(4), "|X(f)|"]}
               />
               <Bar
                 dataKey="magnitude"

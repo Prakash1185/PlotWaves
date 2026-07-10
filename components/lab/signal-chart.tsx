@@ -62,6 +62,11 @@ function exportSvgAsPng(svg: SVGSVGElement, fileName: string) {
     svgString = svgString.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
   }
 
+  const computed = getComputedStyle(document.body)
+  svgString = svgString.replace(/var\((--[\w-]+)\)/g, (match, p1) => {
+    return computed.getPropertyValue(p1).trim() || match
+  })
+
   const svgBlob = new Blob([svgString], {
     type: "image/svg+xml;charset=utf-8",
   })
@@ -144,7 +149,7 @@ export function SignalChart(props: Props) {
 
       <CardContent className="pb-3 pt-0">
         <div ref={chartContainerRef} className="h-56 w-full sm:h-64 lg:h-72">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={props.data} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
               <CartesianGrid
                 stroke="var(--border)"
@@ -158,7 +163,7 @@ export function SignalChart(props: Props) {
                 tickLine={{ stroke: "var(--border)" }}
                 axisLine={{ stroke: "var(--border)" }}
                 label={{
-                  value: "t",
+                  value: "Time (t)",
                   position: "insideBottomRight",
                   offset: -4,
                   fill: "var(--muted-foreground)",
@@ -171,7 +176,15 @@ export function SignalChart(props: Props) {
                 tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
                 tickLine={{ stroke: "var(--border)" }}
                 axisLine={{ stroke: "var(--border)" }}
-                width={36}
+                width={40}
+                label={{
+                  value: "Amplitude",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: "var(--muted-foreground)",
+                  fontSize: 11,
+                  offset: 4,
+                }}
               />
               <RechartsTooltip
                 contentStyle={{
@@ -183,7 +196,13 @@ export function SignalChart(props: Props) {
                 }}
                 labelStyle={{ color: "var(--foreground)", fontWeight: 500 }}
                 labelFormatter={(value) => `t = ${Number(value).toFixed(3)}`}
+                formatter={(value: any) => [`y = ${Number(value).toFixed(4)}`, ""]}
               />
+              <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="currentColor" floodOpacity="0.5" />
+                </filter>
+              </defs>
               <ReferenceLine x={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
               <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
 
@@ -192,21 +211,24 @@ export function SignalChart(props: Props) {
                   <Line
                     type="monotone"
                     dataKey="original"
-                    name="x(t) Original"
+                    name="Original"
                     stroke={props.originalStroke}
                     dot={false}
                     strokeWidth={2.2}
                     animationDuration={300}
+                    isAnimationActive={true}
                   />
                   <Line
                     type="monotone"
                     dataKey="transformed"
-                    name="y(t) Transformed"
+                    name="Transformed"
                     stroke={props.transformedStroke}
                     dot={false}
-                    strokeWidth={2.2}
+                    strokeWidth={2.5}
                     strokeDasharray="6 3"
-                    animationDuration={300}
+                    animationDuration={500}
+                    isAnimationActive={true}
+                    style={{ filter: "drop-shadow(0 0 4px var(--chart-2))" }}
                   />
                   <Legend
                     verticalAlign="top"
@@ -219,11 +241,13 @@ export function SignalChart(props: Props) {
                 <Line
                   type="monotone"
                   dataKey={props.seriesKey}
-                  name={props.seriesKey === "original" ? "x(t)" : "y(t)"}
+                  name={props.seriesKey === "original" ? "Original" : "Transformed"}
                   stroke={props.stroke}
                   dot={false}
                   strokeWidth={2.4}
-                  animationDuration={300}
+                  animationDuration={props.seriesKey === "transformed" ? 500 : 300}
+                  isAnimationActive={true}
+                  style={props.seriesKey === "transformed" ? { filter: "drop-shadow(0 0 5px currentColor)" } : undefined}
                 />
               )}
             </LineChart>

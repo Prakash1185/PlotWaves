@@ -1,72 +1,71 @@
 import { SignalParams, SignalType } from "@/types/signal"
 
-function formatNum(n: number): string {
-  // strip trailing zeros
-  return Number(n.toFixed(3)).toString()
+function fmt(value: number): string {
+  const n = Number(value.toFixed(3))
+  if (Object.is(n, -0)) return "0"
+  return String(n)
+}
+
+function signedTerm(value: number): string {
+  if (value > 0) return " + " + fmt(value)
+  if (value < 0) return " - " + fmt(Math.abs(value))
+  return ""
+}
+
+function maybeMulLeft(coeff: number, expr: string): string {
+  if (coeff === 1) return expr
+  if (coeff === -1) return "-" + expr
+  return fmt(coeff) + "*" + expr
+}
+
+function buildLinearTimeExpr(scale: number, shift: number): string {
+  // scale * (t - shift)
+  if (scale === 0) return "0"
+
+  const inner = shift === 0 ? "t" : "(t - " + fmt(shift) + ")"
+  return maybeMulLeft(scale, inner)
+}
+
+function assertNever(x: never): never {
+  throw new Error("Unhandled signal type: " + String(x))
 }
 
 export function formatEquation(type: SignalType, p: SignalParams): string {
-  // Combine factors to make it academic and clean
-  
-  // Total amplitude multiplier
-  const A = p.outputScale * p.baseAmplitude
-  const A_str = A === 1 ? "" : A === -1 ? "-" : formatNum(A)
+  const effectiveScale = p.timeReversal ? -p.timeScale : p.timeScale
+  const tau = buildLinearTimeExpr(effectiveScale, p.shift)
 
-  // Total time scale multiplier taking into account omega (w) and timeScale (a) and reversal
-  let effectiveW = p.timeScale
-  if (type === "sine" || type === "cosine" || type === "square") {
-    effectiveW = p.timeScale * p.omega
-  }
-  
-  const sign = p.timeReversal ? -1 : 1
-  effectiveW *= sign
-
-  // Shift t0
-  const t0 = p.shift
-
-  // Format the inner argument "(wt - wt0)"
-  let innerArg = ""
-  if (effectiveW === 0) {
-    innerArg = "0"
-  } else {
-    const w_str = Math.abs(effectiveW) === 1 ? (effectiveW < 0 ? "-" : "") : formatNum(effectiveW)
-    innerArg = `${w_str}t`
-    
-    // add shift term: effectiveW * -t0
-    const shiftTerm = effectiveW * -t0
-    if (shiftTerm > 0) {
-      innerArg += ` + ${formatNum(shiftTerm)}`
-    } else if (shiftTerm < 0) {
-      innerArg += ` - ${formatNum(Math.abs(shiftTerm))}`
-    }
+  const combinedAmplitude = p.outputScale * p.baseAmplitude
+  if (combinedAmplitude === 0) {
+    return "y(t) = 0"
   }
 
-  // Phase
-  const phi = p.phase
-  if ((type === "sine" || type === "cosine" || type === "square") && phi !== 0) {
-    if (phi > 0) {
-      innerArg += ` + ${formatNum(phi)}`
-    } else {
-      innerArg += ` - ${formatNum(Math.abs(phi))}`
-    }
-  }
+  const ampFactor = combinedAmplitude === 1 ? "" : fmt(combinedAmplitude) + "*"
 
-  // Handle specific functions
+  const periodicCore = (() => {
+    const omegaTerm = maybeMulLeft(p.omega, tau)
+    const phase = signedTerm(p.phase)
+    return omegaTerm + phase
+  })()
+
   switch (type) {
     case "sine":
-      return `y(t) = ${A_str === "" ? "1" : A_str} sin(${innerArg})`
+      return "y(t) = " + ampFactor + "sin(" + periodicCore + ")"
+
     case "cosine":
-      return `y(t) = ${A_str === "" ? "1" : A_str} cos(${innerArg})`
+      return "y(t) = " + ampFactor + "cos(" + periodicCore + ")"
+
     case "square":
-      return `y(t) = ${A_str === "" ? "1" : A_str} square(${innerArg})`
+      return "y(t) = " + ampFactor + "square(" + periodicCore + ")"
+
     case "step":
-      return `y(t) = ${A_str === "" ? "1" : A_str} u(${innerArg})`
+      return "y(t) = " + ampFactor + "u(" + tau + ")"
+
     case "ramp":
-      // r(t) = t * u(t)
-      return `y(t) = ${A_str === "" ? "" : A_str}(${innerArg}) u(${innerArg})`
+      return "y(t) = " + ampFactor + tau + "*u(" + tau + ")"
+
     case "exp":
-      return `y(t) = ${A_str === "" ? "1" : A_str} e^(${innerArg})`
-    default:
-      return "y(t) = 0"
+      return "y(t) = " + ampFactor + "exp(" + tau + ")"
   }
+
+  return assertNever(type)
 }

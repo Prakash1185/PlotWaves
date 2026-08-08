@@ -3,5 +3,5 @@
 import { Toaster } from "@/components/ui/sonner"
 
 export function AppToaster() {
-  return <Toaster richColors closeButton position="top-right" />
+  return <Toaster richColors closeButton position="bottom-right" />
 }

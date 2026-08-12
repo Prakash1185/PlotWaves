@@ -40,10 +40,27 @@ export function AnimatedWaveform() {
       const baseAlpha = isDark ? 0.12 : 0.08
 
       const waves = [
-        { freq: 0.008, amp: 0.18, speed: 0.0008, color: `oklch(0.72 0.19 195 / ${baseAlpha})`, width: 2 },
-        { freq: 0.012, amp: 0.12, speed: 0.0012, color: `oklch(0.68 0.19 25 / ${baseAlpha * 0.8})`, width: 1.5 },
-        { freq: 0.006, amp: 0.22, speed: 0.0006, color: `oklch(0.65 0.15 260 / ${baseAlpha * 0.6})`, width: 1.8 },
-        { freq: 0.015, amp: 0.08, speed: 0.0015, color: `oklch(0.70 0.18 330 / ${baseAlpha * 0.5})`, width: 1.2 },
+        {
+          freq: 0.008,
+          amp: 0.18,
+          speed: 0.0008,
+          color: `oklch(0.68 0.18 25 / ${baseAlpha * 1.2})`, // primary orange
+          width: 2.2,
+        },
+        {
+          freq: 0.012,
+          amp: 0.12,
+          speed: 0.0012,
+          color: `oklch(0.70 0.16 300 / ${baseAlpha * 0.9})`, // magenta
+          width: 1.8,
+        },
+        {
+          freq: 0.006,
+          amp: 0.22,
+          speed: 0.0006,
+          color: `oklch(0.72 0.12 150 / ${baseAlpha * 0.7})`, // green
+          width: 1.6,
+        },
       ]
 
       for (const wave of waves) {
@@ -57,14 +74,18 @@ export function AnimatedWaveform() {
         for (let x = 0; x <= width; x += 2) {
           const y =
             centerY +
-            height * wave.amp * Math.sin(x * wave.freq + time * wave.speed) *
-            Math.cos(x * wave.freq * 0.3 + time * wave.speed * 0.5)
+            height *
+              wave.amp *
+              Math.sin(x * wave.freq + time * wave.speed) *
+              Math.cos(x * wave.freq * 0.3 + time * wave.speed * 0.5)
 
           if (x === 0) ctx.moveTo(x, y)
           else ctx.lineTo(x, y)
         }
 
         ctx.stroke()
+        ctx.shadowBlur = 10
+        ctx.shadowColor = wave.color
       }
 
       animRef.current = requestAnimationFrame(draw)

@@ -100,7 +100,12 @@ function exportChartFromData(props: Props) {
     props.mode === "overlay"
       ? [
           { key: "original", label: "Original", stroke: props.originalStroke },
-          { key: "transformed", label: "Transformed", stroke: props.transformedStroke, dashed: true },
+          {
+            key: "transformed",
+            label: "Transformed",
+            stroke: props.transformedStroke,
+            dashed: true,
+          },
         ]
       : [
           {
@@ -159,8 +164,10 @@ function exportChartFromData(props: Props) {
     return
   }
 
-  const mapX = (x: number) => pad.left + ((x - xMin) / (xMax - xMin || 1)) * plotW
-  const mapY = (y: number) => pad.top + ((yMax - y) / (yMax - yMin || 1)) * plotH
+  const mapX = (x: number) =>
+    pad.left + ((x - xMin) / (xMax - xMin || 1)) * plotW
+  const mapY = (y: number) =>
+    pad.top + ((yMax - y) / (yMax - yMin || 1)) * plotH
 
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, width, height)
@@ -251,7 +258,10 @@ function exportChartFromData(props: Props) {
 
   series.forEach((s) => {
     ctx.save()
-    ctx.strokeStyle = resolveCssColor(s.stroke, s.key === "original" ? "#1d4ed8" : "#dc2626")
+    ctx.strokeStyle = resolveCssColor(
+      s.stroke,
+      s.key === "original" ? "#1d4ed8" : "#dc2626"
+    )
     ctx.lineWidth = s.key === "transformed" ? 3.2 : 2.8
     ctx.lineJoin = "round"
     ctx.lineCap = "round"
@@ -282,7 +292,10 @@ function exportChartFromData(props: Props) {
   series.forEach((s, index) => {
     const y = legendY + index * 26
     ctx.save()
-    ctx.strokeStyle = resolveCssColor(s.stroke, s.key === "original" ? "#1d4ed8" : "#dc2626")
+    ctx.strokeStyle = resolveCssColor(
+      s.stroke,
+      s.key === "original" ? "#1d4ed8" : "#dc2626"
+    )
     ctx.lineWidth = 3
     ctx.setLineDash(s.dashed ? [12, 8] : [])
     ctx.beginPath()
@@ -313,19 +326,38 @@ export function SignalChart(props: Props) {
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
         <div>
           <CardTitle className="text-sm font-semibold">{props.title}</CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">{props.subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {props.subtitle}
+          </p>
         </div>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleExport}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={handleExport}
+        >
           <Download className="mr-1 size-3" />
           PNG
         </Button>
       </CardHeader>
 
-      <CardContent className="pb-3 pt-0">
+      <CardContent className="pt-0 pb-3">
         <div ref={chartContainerRef} className="h-56 w-full sm:h-64 lg:h-72">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <LineChart data={props.data} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.5} />
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={0}
+          >
+            <LineChart
+              data={props.data}
+              margin={{ left: 4, right: 8, top: 8, bottom: 4 }}
+            >
+              <CartesianGrid
+                stroke="var(--border)"
+                strokeDasharray="3 3"
+                strokeOpacity={0.5}
+              />
               <XAxis
                 dataKey="t"
                 stroke="var(--muted-foreground)"
@@ -366,11 +398,27 @@ export function SignalChart(props: Props) {
                 }}
                 labelStyle={{ color: "var(--foreground)", fontWeight: 500 }}
                 labelFormatter={(value) => `t = ${Number(value).toFixed(3)}`}
-                formatter={(value: number, key: string) => [`${Number(value).toFixed(4)}`, key]}
+                formatter={(value, key) => {
+                  const numeric = Array.isArray(value)
+                    ? Number(value[0] ?? 0)
+                    : Number(value ?? 0)
+
+                  return [numeric.toFixed(4), String(key)]
+                }}
               />
 
-              <ReferenceLine x={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
-              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeDasharray="4 4" />
+              <ReferenceLine
+                x={0}
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.3}
+                strokeDasharray="4 4"
+              />
+              <ReferenceLine
+                y={0}
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.3}
+                strokeDasharray="4 4"
+              />
 
               {isOverlay ? (
                 <>
@@ -399,18 +447,25 @@ export function SignalChart(props: Props) {
                     verticalAlign="top"
                     height={28}
                     iconType="line"
-                    wrapperStyle={{ fontSize: "11px", color: "var(--muted-foreground)" }}
+                    wrapperStyle={{
+                      fontSize: "11px",
+                      color: "var(--muted-foreground)",
+                    }}
                   />
                 </>
               ) : (
                 <Line
                   type="monotone"
                   dataKey={props.seriesKey}
-                  name={props.seriesKey === "original" ? "Original" : "Transformed"}
+                  name={
+                    props.seriesKey === "original" ? "Original" : "Transformed"
+                  }
                   stroke={props.stroke}
                   dot={false}
                   strokeWidth={2.4}
-                  animationDuration={props.seriesKey === "transformed" ? 500 : 300}
+                  animationDuration={
+                    props.seriesKey === "transformed" ? 500 : 300
+                  }
                   isAnimationActive
                 />
               )}

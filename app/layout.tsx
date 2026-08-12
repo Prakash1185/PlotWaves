@@ -1,10 +1,17 @@
-import { Geist_Mono, Instrument_Sans } from "next/font/google"
+import {
+  Geist_Mono,
+  Instrument_Sans,
+  Inter,
+  Space_Grotesk,
+  JetBrains_Mono,
+} from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { AppToaster } from "@/components/app-toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Footer } from "@/components/footer"
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -16,6 +23,21 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+})
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+})
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,12 +47,19 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", instrumentSans.variable)}
+      className={cn(
+        "font-sans antialiased",
+        fontMono.variable,
+        instrumentSans.variable,
+        inter.variable,
+        spaceGrotesk.variable,
+        jetBrainsMono.variable
+      )}
     >
       <body className="min-h-screen bg-background text-foreground">
-        <ThemeProvider>
+        <ThemeProvider defaultTheme="system">
           <AppToaster />
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>{children}<Footer/></TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

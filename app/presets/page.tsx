@@ -4,12 +4,10 @@ import Link from "next/link"
 import { useMemo, useState, type ComponentType } from "react"
 import { motion } from "framer-motion"
 import {
-  Activity,
   ArrowLeft,
   ArrowRight,
   AudioLines,
   BookOpen,
-  Cpu,
   Filter,
   Gauge,
   HeartPulse,
@@ -338,12 +336,18 @@ const cardContainer = {
 
 const cardItem = {
   hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0, 0, 0.2, 1] as const } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0, 0, 0.2, 1] as const },
+  },
 }
 
 function toQueryString(query: LabPresetQuery): string {
   const params = new URLSearchParams()
-  const entries = Object.entries(query) as Array<[keyof LabPresetQuery, string | number | boolean | undefined]>
+  const entries = Object.entries(query) as Array<
+    [keyof LabPresetQuery, string | number | boolean | undefined]
+  >
 
   for (const [key, value] of entries) {
     if (value === undefined) continue
@@ -372,8 +376,10 @@ function summarizeQuery(query: LabPresetQuery): string[] {
 }
 
 function levelBadgeClass(level: PresetLevel): string {
-  if (level === "Starter") return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-  if (level === "Intermediate") return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+  if (level === "Starter")
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+  if (level === "Intermediate")
+    return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
   return "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
 }
 
@@ -434,104 +440,87 @@ export default function PresetsPage() {
   }, [filteredGroups])
 
   return (
-    <main className="relative min-h-screen overflow-hidden pb-24">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-background to-muted/20" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.05]" />
-      <div className="pointer-events-none absolute -top-24 left-0 h-80 w-80 rounded-full bg-chart-1/20 blur-3xl" />
-      <div className="pointer-events-none absolute -top-16 right-0 h-80 w-80 rounded-full bg-chart-3/20 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden pb-28">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.68_0.18_25/0.12),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_100%_100%,oklch(0.70_0.16_300/0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:5rem_5rem] opacity-[0.04]" />
 
-      <div className="relative mx-auto w-full max-w-6xl px-6 pt-10">
-        <header className="mb-8">
-          <div className="mb-5 flex flex-wrap items-center gap-2">
-            <Button variant="ghost" size="sm" asChild className="h-8 px-2">
+      <div className="relative mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-12">
+        <header className="mb-10">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="inter h-9 px-3"
+            >
               <Link href="/">
                 <ArrowLeft className="mr-2 size-3.5" />
                 Back Home
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild className="h-8 px-2">
-              <Link href="/lab">
-                Open Empty Lab
-              </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="inter h-9 px-3"
+            >
+              <Link href="/lab">Open Empty Lab</Link>
             </Button>
           </div>
 
-          <Card className="border-border/60 bg-card/70 shadow-sm backdrop-blur-sm">
-            <CardContent className="grid gap-6 p-6 md:grid-cols-[1.4fr,1fr]">
+          <Card className="border-border/60 bg-card/70 shadow-sm backdrop-blur-xl">
+            <CardContent className="grid gap-8 p-6 sm:p-8 md:grid-cols-[1.35fr,1fr] md:gap-10">
               <div>
-                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  <Sparkles className="size-3.5" />
-                  Real-World Signal Library
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Awesome Presets For Fast Classroom and Lab Demos
+                <h1 className="space text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+                  Presets for fast classroom and lab demos
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Curated, practical, and transformation-rich presets for communication, audio,
-                  control, power, biomedical, and convolution use cases.
+                <p className="inter mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  Curated, practical, and transformation-rich presets for
+                  communication, audio, control, power, biomedical, and
+                  convolution use cases.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <StatTile label="Total Presets" value={String(allPresetsCount)} icon={Layers} />
-                <StatTile label="Featured" value={String(featuredPresets.length)} icon={Sparkles} />
-                <StatTile label="Categories" value={String(PRESET_GROUPS.length)} icon={Filter} />
-                <StatTile label="Visible Now" value={String(visibleCount)} icon={Waves} />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <StatTile
+                  label="Total Presets"
+                  value={String(allPresetsCount)}
+                  icon={Layers}
+                />
+                <StatTile
+                  label="Featured"
+                  value={String(featuredPresets.length)}
+                  icon={Sparkles}
+                />
+                <StatTile
+                  label="Categories"
+                  value={String(PRESET_GROUPS.length)}
+                  icon={Filter}
+                />
+                <StatTile
+                  label="Visible Now"
+                  value={String(visibleCount)}
+                  icon={Waves}
+                />
               </div>
             </CardContent>
           </Card>
         </header>
 
-        <section className="mb-8">
-          <Card className="border-border/60 bg-card/70">
-            <CardContent className="grid gap-3 p-4 md:grid-cols-[1.3fr,0.7fr,auto]">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search by name, tag, or real-world use..."
-                  className="pl-8"
-                />
-              </div>
 
-              <Select value={groupFilter} onValueChange={setGroupFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {PRESET_GROUPS.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
-                      {group.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant={featuredOnly ? "default" : "outline"}
-                onClick={() => setFeaturedOnly((prev) => !prev)}
-                className="md:justify-self-end"
-              >
-                <Sparkles className="mr-1.5 size-4" />
-                Featured Only
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" />
-            <h2 className="text-lg font-semibold">Top Picks</h2>
+        <section className="mb-12">
+          <div className="mb-5 flex items-center gap-2">
+            <h2 className="space text-xl font-semibold sm:text-2xl md:text-3xl lg:text-4xl">
+              Top Picks
+            </h2>
           </div>
 
           <motion.div
             variants={cardContainer}
             initial="hidden"
             animate="show"
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
             {featuredPresets.map((preset) => (
               <motion.div key={preset.id} variants={cardItem}>
@@ -545,13 +534,14 @@ export default function PresetsPage() {
           variants={cardContainer}
           initial="hidden"
           animate="show"
-          className="space-y-10"
+          className="space-y-12"
         >
           {filteredGroups.length === 0 ? (
             <Card className="border-border/60 bg-card/70">
-              <CardContent className="p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No presets matched your current filters. Try clearing search or selecting All Categories.
+              <CardContent className="p-10 text-center">
+                <p className="inter text-sm text-muted-foreground">
+                  No presets matched your current filters. Try clearing search
+                  or selecting All Categories.
                 </p>
               </CardContent>
             </Card>
@@ -561,15 +551,21 @@ export default function PresetsPage() {
 
               return (
                 <motion.section key={group.id} variants={cardItem}>
-                  <div className="mb-4 flex items-center justify-between border-b border-border/50 pb-2">
+                  <div className="mb-4 flex items-center justify-between border-b border-border/50">
                     <div className="flex items-center gap-2">
                       <Icon className="size-4 text-muted-foreground" />
-                      <h2 className="text-lg font-semibold">{group.title}</h2>
+                      <h2 className="space text-xl font-semibold sm:text-2xl">
+                        {group.title}
+                      </h2>
                     </div>
-                    <Badge variant="outline">{group.presets.length} presets</Badge>
+                    <Badge variant="outline" className="inter">
+                      {group.presets.length} presets
+                    </Badge>
                   </div>
 
-                  <p className="mb-4 text-xs text-muted-foreground">{group.subtitle}</p>
+                  <p className="inter mb-5 text-sm text-muted-foreground">
+                    {group.subtitle}
+                  </p>
 
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {group.presets.map((preset) => (
@@ -582,16 +578,19 @@ export default function PresetsPage() {
           )}
         </motion.div>
 
-        <section className="mt-12">
-          <Card className="border-border/60 bg-card/70">
-            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+        <section className="mt-14">
+          <Card className="border-border/60 bg-card/70 shadow-sm backdrop-blur-xl">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
               <div>
-                <p className="text-sm font-medium">Need a custom scenario?</p>
-                <p className="text-xs text-muted-foreground">
-                  Open the lab and tune parameters manually, then share query presets with your team.
+                <p className="space text-lg font-semibold">
+                  Need a custom scenario?
+                </p>
+                <p className="inter text-sm text-muted-foreground">
+                  Open the lab and tune parameters manually, then share query
+                  presets with your team.
                 </p>
               </div>
-              <Button asChild>
+              <Button asChild className="inter">
                 <Link href="/lab">
                   Open Lab
                   <ArrowRight className="ml-1.5 size-3.5" />
@@ -615,12 +614,12 @@ function StatTile({
   icon: ComponentType<{ className?: string }>
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
-      <div className="mb-1 flex items-center gap-1.5 text-muted-foreground">
+    <div className="border border-border/60 bg-background/70 p-4 backdrop-blur-sm">
+      <div className="mb-2 flex items-center gap-1.5 text-muted-foreground">
         <Icon className="size-3.5" />
-        <span className="text-[11px]">{label}</span>
+        <span className="inter text-[11px]">{label}</span>
       </div>
-      <p className="text-lg font-semibold leading-none">{value}</p>
+      <p className="jet text-2xl leading-none font-semibold">{value}</p>
     </div>
   )
 }
@@ -636,53 +635,65 @@ function PresetCard({
   const queryTags = summarizeQuery(preset.query)
 
   return (
-    <Card className="group relative overflow-hidden border-border/50 bg-card/50 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/80 hover:shadow-md">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-chart-1/60 via-chart-3/60 to-chart-5/60 opacity-0 transition-opacity group-hover:opacity-100" />
-      <CardHeader className={compact ? "pb-2" : "pb-2"}>
-        <div className="mb-2 flex items-center gap-2">
+    <Card className="group relative overflow-hidden border border-border/55 bg-card/60 transition-[border-color,background-color,box-shadow] duration-250 hover:border-primary/40 hover:bg-card/85 hover:shadow-md">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-chart-1/60 via-chart-3/60 to-chart-5/60 opacity-0 transition-opacity duration-250 group-hover:opacity-100" />
+
+      <CardHeader className="">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge variant="outline" className={levelBadgeClass(preset.level)}>
             {preset.level}
           </Badge>
           {preset.featured ? (
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="inter text-xs">
               <Sparkles className="mr-1 size-3" />
               Featured
             </Badge>
           ) : null}
         </div>
-        <CardTitle className={compact ? "text-sm font-semibold" : "text-base font-semibold"}>
+
+        <CardTitle
+          className={
+            compact
+              ? "text-lg sm:text-xl font-semibold"
+              : "text-xl font-semibold"
+          }
+        >
           {preset.name}
         </CardTitle>
       </CardHeader>
 
       <CardContent>
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">{preset.description}</p>
+        <p className="inter mb-4 text-base leading-relaxed text-muted-foreground">
+          {preset.description}
+        </p>
 
-        <div className="mb-3 rounded-md border border-border/60 bg-muted/30 p-2">
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Real-world context</p>
-          <p className="text-xs text-foreground/90">{preset.realWorld}</p>
+        <div className="mb-4 border border-border/60 bg-muted/30 p-4">
+          <p className="inter mb-1 text-[11px] tracking-wide text-muted-foreground uppercase">
+            Real-world context
+          </p>
+          <p className="inter text-sm text-foreground/90">{preset.realWorld}</p>
         </div>
 
-        <div className="mb-3 flex flex-wrap gap-1.5">
+        <div className="mb-4 flex flex-wrap gap-1.5">
           {preset.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-[10px]">
+            <Badge key={tag} variant="outline" className="inter text-xs">
               {tag}
             </Badge>
           ))}
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-1">
+        <div className="mb-5 flex flex-wrap gap-1.5">
           {queryTags.slice(0, compact ? 3 : 5).map((item) => (
-            <Badge key={item} variant="secondary" className="text-[10px]">
+            <Badge key={item} variant="secondary" className="jet text-xs">
               {item}
             </Badge>
           ))}
         </div>
 
-        <Button asChild size="sm" className="w-full">
+        <Button asChild className="inter h-11 w-full text-base">
           <Link href={href}>
             Load Preset
-            <ArrowRight className="ml-1.5 size-3" />
+            <ArrowRight className="ml-2 size-4" />
           </Link>
         </Button>
       </CardContent>

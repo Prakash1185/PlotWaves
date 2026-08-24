@@ -295,12 +295,6 @@ export function ConvolutionAnimator({ baseData, gain, decay }: Props) {
           </div>
         </div>
 
-        <div className="rounded-md border border-border/60 bg-muted/30 p-2">
-          <p className="text-xs font-medium">Correct Process</p>
-          <p className="text-[11px] text-muted-foreground">
-            h(t) → h(-τ) → h(t-τ) → x(τ)h(t-τ) → ∫ overlap dτ
-          </p>
-        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Guided Steps</span>

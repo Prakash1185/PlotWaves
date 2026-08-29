@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import { AppToaster } from "@/components/app-toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Footer } from "@/components/footer"
+import { Metadata } from "next"
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -38,6 +39,12 @@ const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 })
 
+export const metadata: Metadata = {
+  title: "PlotWaves - ECE simulations made clear.",
+  description:
+    "Interactive Signals and Systems lab to explore signal generation, transformations, convolution, and analysis.",
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -59,7 +66,10 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground">
         <ThemeProvider defaultTheme="system">
           <AppToaster />
-          <TooltipProvider>{children}<Footer/></TooltipProvider>
+          <TooltipProvider>
+            {children}
+            <Footer />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

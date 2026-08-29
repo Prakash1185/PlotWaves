@@ -1,21 +1,40 @@
-# Next.js template
+# PlotWaves
 
-This is a Next.js template with shadcn/ui.
+Interactive Signals and Systems learning lab.
 
-## Adding components
+PlotWaves helps you generate signals, apply transformations, analyze behavior, and build intuition visually in the browser.
 
-To add components to your app, run the following command:
+![Landing Page](./public/herol.png)  
+<!-- ![Landing Page](./public/herod.png)   -->
+## Lab Workspace
+![Lab Workspace](./public/lab.png)  
+## Presets
+![Presets Page](./public/preset.png)
 
-```bash
-npx shadcn@latest add button
-```
+## Features
 
-This will place the ui components in the `components` directory.
+- Signal generation: sine, cosine, square, step, ramp, exponential
+- Real-time transformations: shift, scale, reversal, amplitude scaling
+- Equation view and manual expression mode
+- Split and overlay chart modes
+- PNG chart export
+- Signal analysis: RMS, energy, peak-to-peak, zero crossings, frequency spectrum
+- Even and odd decomposition
+- Convolution animator with guided steps
+- Curated real-world presets by category
 
-## Using components
+## Tech Stack
 
-To use the components in your app, import them as follows:
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion
+- Recharts
 
-```tsx
-import { Button } from "@/components/ui/button";
-```
+## Pages
+
+- Home
+- Lab
+- Presets

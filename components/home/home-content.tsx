@@ -100,7 +100,7 @@ function HomeHeader() {
             asChild
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Link href="/" target="_blank" rel="noreferrer">
+            <Link href="https://github.com/Prakash1185/PlotWaves" target="_blank" rel="noreferrer">
               <HugeiconsIcon icon={GithubIcon} className="size-5" />
               <span className="sr-only">GitHub</span>
             </Link>

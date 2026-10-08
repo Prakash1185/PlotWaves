@@ -13,7 +13,7 @@ PlotWaves helps you generate signals, apply transformations, analyze behavior, a
 
 ## Features
 
-- Signal generation: sine, cosine, square, step, ramp, exponential
+- Signal generation: sine, cosine, square, step, ramp, exponential, with adjustable frequency in Hz
 - Real-time transformations: shift, scale, reversal, amplitude scaling
 - Equation view and manual expression mode
 - Split and overlay chart modes

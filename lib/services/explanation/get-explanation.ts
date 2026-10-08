@@ -126,10 +126,10 @@ export function getExplanation(p: SignalParams, signalType?: SignalType): Explan
     })
   }
 
-  // Omega / frequency
+  // Frequency
   if (p.omega > 8) {
     entries.push({
-      text: "High angular frequency — ensure sampling step is small enough to capture all oscillations.",
+      text: "High frequency — ensure sampling step is small enough to capture all oscillations.",
       category: "warning",
     })
   }

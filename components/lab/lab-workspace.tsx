@@ -64,9 +64,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-import { SignalParams, SignalPoint, SignalType } from "@/types/signal"
+import {
+  angularFrequency,
+  frequencyFromAngular,
+  SignalParams,
+  SignalPoint,
+  SignalType,
+} from "@/types/signal"
 import { sampleSignal } from "@/lib/services/signal/sample-signal"
+import { transformTime } from "@/lib/services/signal/transform-time"
 import { formatEquation } from "@/lib/services/equation/format-equation"
 import { getExplanation } from "@/lib/services/explanation/get-explanation"
 import { compileManualEquation } from "@/lib/services/equation/manual-evaluator"
@@ -86,6 +92,7 @@ type ChartLayout = "split" | "overlay"
 type RangeKey =
   | "baseAmplitude"
   | "omega"
+  | "frequency"
   | "phase"
   | "shift"
   | "timeScale"
@@ -96,6 +103,7 @@ type RangeMap = Record<RangeKey, { min: number; max: number }>
 const defaults: SignalParams = {
   baseAmplitude: 1,
   omega: 2,
+  frequency: frequencyFromAngular(2),
   phase: 0,
   shift: 0,
   timeScale: 1,
@@ -109,6 +117,7 @@ const defaults: SignalParams = {
 const defaultRanges: RangeMap = {
   baseAmplitude: { min: 0, max: 5 },
   omega: { min: 0, max: 12 },
+  frequency: { min: 0, max: 12 },
   phase: { min: -6.28, max: 6.28 },
   shift: { min: -5, max: 5 },
   timeScale: { min: 0, max: 4 },
@@ -379,17 +388,27 @@ export function LabWorkspace() {
       presetLoaded = true
     }
 
-    const w = searchParams.get("w")
+    const frequency = searchParams.get("f")
+    const legacyOmega = searchParams.get("w")
     const shift = searchParams.get("shift")
     const scale = searchParams.get("scale")
     const A = searchParams.get("A")
     const rev = searchParams.get("rev")
     const step = searchParams.get("step")
 
-    if (w || shift || scale || A || rev || step) {
+    if (frequency || legacyOmega || shift || scale || A || rev || step) {
       setParams((prev) => ({
         ...prev,
-        omega: w ? parseFloat(w) : prev.omega,
+        omega: legacyOmega
+          ? parseFloat(legacyOmega)
+          : frequency
+            ? angularFrequency(parseFloat(frequency))
+            : prev.omega,
+        frequency: frequency
+          ? parseFloat(frequency)
+          : legacyOmega
+            ? frequencyFromAngular(parseFloat(legacyOmega))
+            : prev.frequency,
         shift: shift ? parseFloat(shift) : prev.shift,
         timeScale: scale ? parseFloat(scale) : prev.timeScale,
         baseAmplitude: A ? parseFloat(A) : prev.baseAmplitude,
@@ -429,13 +448,16 @@ export function LabWorkspace() {
     }
 
     return baseData.map((point) => {
-      const value = manualCompile.fn(point.t)
+      const original = manualCompile.fn(point.t)
+      const transformedInput = transformTime(point.t, params)
+      const transformed = params.outputScale * manualCompile.fn(transformedInput)
       return {
         ...point,
-        transformed: Number(value.toFixed(6)),
+        original: Number(original.toFixed(6)),
+        transformed: Number(transformed.toFixed(6)),
       }
     })
-  }, [baseData, equationMode, manualCompile])
+  }, [baseData, equationMode, manualCompile, params])
 
   const convolutionData = useMemo(
     () => buildConvolutionPreview(baseData, convGain, convDecay),
@@ -486,7 +508,7 @@ export function LabWorkspace() {
       case "square":
         return `x(t) = ${A} · square(${w}t + ${p})`
     }
-  }, [signalType, params.baseAmplitude, params.omega, params.phase])
+  }, [signalType, params.baseAmplitude, params.frequency, params.phase])
 
   const transformSubstitution = useMemo(() => {
     const signedA = params.timeReversal ? -params.timeScale : params.timeScale
@@ -589,6 +611,11 @@ export function LabWorkspace() {
         rangeDraft.baseAmplitude.max
       ),
       omega: clamp(prev.omega, rangeDraft.omega.min, rangeDraft.omega.max),
+      frequency: clamp(
+        prev.frequency,
+        rangeDraft.frequency.min,
+        rangeDraft.frequency.max
+      ),
       phase: clamp(prev.phase, rangeDraft.phase.min, rangeDraft.phase.max),
       shift: clamp(prev.shift, rangeDraft.shift.min, rangeDraft.shift.max),
       timeScale: clamp(
@@ -663,7 +690,7 @@ export function LabWorkspace() {
 
       setParams((prev) => {
         if (periodic) {
-          if (prev.omega === 0) return prev
+          if (prev.frequency === 0) return prev
 
           let nextPhase = prev.phase + prev.omega * dt
           while (nextPhase > Math.PI) nextPhase -= 2 * Math.PI
@@ -790,13 +817,34 @@ export function LabWorkspace() {
         onChange={(v) => updateParam("baseAmplitude", v)}
       />
       <ParamSlider
+        label="Frequency (f)"
+        tip="Frequency of the wave in hertz (Hz). Changing it updates the existing angular frequency (ω)."
+        value={params.frequency}
+        min={ranges.frequency.min}
+        max={ranges.frequency.max}
+        step={0.1}
+        onChange={(v) =>
+          setParams((prev) => ({
+            ...prev,
+            frequency: v,
+            omega: angularFrequency(v),
+          }))
+        }
+      />
+      <ParamSlider
         label="Omega (ω)"
         tip="Angular frequency in rad/s."
         value={params.omega}
         min={ranges.omega.min}
         max={ranges.omega.max}
         step={0.1}
-        onChange={(v) => updateParam("omega", v)}
+        onChange={(v) =>
+          setParams((prev) => ({
+            ...prev,
+            omega: v,
+            frequency: frequencyFromAngular(v),
+          }))
+        }
       />
       <ParamSlider
         label="Phase (φ)"
@@ -1610,6 +1658,13 @@ export function LabWorkspace() {
                     max={rangeDraft.omega.max}
                     onMinChange={(v) => updateRangeDraft("omega", "min", v)}
                     onMaxChange={(v) => updateRangeDraft("omega", "max", v)}
+                  />
+                  <RangeRow
+                    label="Frequency (Hz)"
+                    min={rangeDraft.frequency.min}
+                    max={rangeDraft.frequency.max}
+                    onMinChange={(v) => updateRangeDraft("frequency", "min", v)}
+                    onMaxChange={(v) => updateRangeDraft("frequency", "max", v)}
                   />
                   <RangeRow
                     label="Phase"
